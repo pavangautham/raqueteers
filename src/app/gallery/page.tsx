@@ -35,7 +35,7 @@ export default function GalleryPage() {
           Moments from the 2024 Raqueteers Badminton Tournament
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {photos.map((photo, i) => (
             <div
               key={i}
