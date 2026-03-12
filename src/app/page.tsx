@@ -16,6 +16,7 @@ import {
   WifiOff,
   BadgeInfo,
   BookOpen,
+  Gamepad2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -119,13 +120,30 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-3">
+              <Link
+                href="/guide"
+                className="flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-[11px] font-medium transition-colors"
+                title="Guide"
+              >
+                <BadgeInfo className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Guide</span>
+              </Link>
               <Link
                 href="/rules"
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-[11px] font-medium transition-colors"
+                className="flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-[11px] font-medium transition-colors"
+                title="Rules"
               >
                 <BookOpen className="w-3.5 h-3.5" />
-                Rules
+                <span className="hidden sm:inline">Rules</span>
+              </Link>
+              <Link
+                href="/demo"
+                className="flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-[11px] font-medium transition-colors"
+                title="Demo"
+              >
+                <Gamepad2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Demo</span>
               </Link>
               {connected ? (
                 <span className="flex items-center gap-1 text-[10px] text-emerald-400">

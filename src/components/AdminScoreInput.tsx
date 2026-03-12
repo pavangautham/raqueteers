@@ -23,6 +23,7 @@ interface AdminScoreInputProps {
   teams: Team[];
   onUpdate: () => void;
   role: Role;
+  demoMode?: boolean;
 }
 
 export default function AdminScoreInput({
@@ -30,6 +31,7 @@ export default function AdminScoreInput({
   teams,
   onUpdate,
   role,
+  demoMode = false,
 }: AdminScoreInputProps) {
   const team1 = teams.find((t) => t.id === match.team1_id);
   const team2 = teams.find((t) => t.id === match.team2_id);
@@ -198,6 +200,14 @@ export default function AdminScoreInput({
   const handleSave = async () => {
     setSaving(true);
     try {
+      // In demo mode, skip all DB writes
+      if (demoMode) {
+        await new Promise((r) => setTimeout(r, 300)); // simulate save delay
+        setHistory([]);
+        onUpdate();
+        return;
+      }
+
       // Build all score upsert promises in parallel
       const scorePromises = scores.map((score) => {
         const existing = sets.find((s) => s.set_number === score.set_number);
@@ -261,13 +271,14 @@ export default function AdminScoreInput({
       {/* Header - always visible */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-800/30 transition-colors"
+        className="w-full px-4 py-3 hover:bg-gray-800/30 transition-colors"
       >
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-mono text-gray-500">
+        {/* Top row: match number, team names, chevron */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-mono text-gray-500 shrink-0">
             #{match.match_number}
           </span>
-          <span className="text-sm font-medium text-gray-200 truncate">
+          <span className="text-sm font-medium text-gray-200 truncate min-w-0">
             <span className="sm:hidden">
               {team1 ? `${team1.player1}` : "TBD"} vs{" "}
               {team2 ? `${team2.player1}` : "TBD"}
@@ -277,34 +288,37 @@ export default function AdminScoreInput({
               {team2 ? `${team2.player1} & ${team2.player2}` : "TBD"}
             </span>
           </span>
+          <div className="flex items-center gap-2 shrink-0 ml-auto">
+            {match.status === "live" && (
+              <span className="flex items-center gap-1 text-[10px] text-red-400 font-bold">
+                <Radio className="w-3 h-3 animate-pulse_live" /> LIVE
+              </span>
+            )}
+            {match.status === "completed" && (
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            )}
+            {isLocked && (
+              <Lock className="w-3 h-3 text-gray-600" />
+            )}
+            {expanded ? (
+              <ChevronUp className="w-4 h-4 text-gray-500" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-gray-500" />
+            )}
+          </div>
+        </div>
+        {/* Bottom row: time + set scores */}
+        <div className="flex items-center gap-2 mt-1">
           <span className="text-[10px] text-gray-500">
             {match.scheduled_time}
           </span>
-          {match.status === "live" && (
-            <span className="flex items-center gap-1 text-[10px] text-red-400 font-bold">
-              <Radio className="w-3 h-3 animate-pulse_live" /> LIVE
-            </span>
-          )}
-          {match.status === "completed" && (
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-          )}
-          {isLocked && (
-            <Lock className="w-3 h-3 text-gray-600" />
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex gap-1 text-xs font-mono text-gray-500">
+          <div className="flex gap-1.5 text-xs font-mono text-gray-500">
             {scores.map((s, i) => (
               <span key={i}>
                 {s.team1_score}-{s.team2_score}
               </span>
             ))}
           </div>
-          {expanded ? (
-            <ChevronUp className="w-4 h-4 text-gray-500" />
-          ) : (
-            <ChevronDown className="w-4 h-4 text-gray-500" />
-          )}
         </div>
       </button>
 
