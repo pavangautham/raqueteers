@@ -124,6 +124,25 @@ export default function AdminPage() {
     [matches]
   );
 
+  const handleResetKnockout = async () => {
+    setSyncing(true);
+    const knockouts = matches.filter((m) => m.round !== "league");
+    for (const m of knockouts) {
+      await supabase
+        .from("matches")
+        .update({
+          team1_id: null,
+          team2_id: null,
+          winner_team_id: null,
+          status: "upcoming",
+        })
+        .eq("id", m.id);
+      await supabase.from("set_scores").delete().eq("match_id", m.id);
+    }
+    await fetchData();
+    setSyncing(false);
+  };
+
   const handleUpdateSemiFinals = async () => {
     if (!allLeagueComplete) return;
     setSyncing(true);
@@ -428,18 +447,28 @@ export default function AdminPage() {
                     All league matches must be completed before generating semi-finals.
                   </div>
                 )}
-                <button
-                  onClick={handleUpdateSemiFinals}
-                  disabled={syncing || !allLeagueComplete}
-                  className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-600/30 disabled:text-purple-300/50 text-white font-medium text-sm py-3 px-4 rounded-lg transition-colors"
-                >
-                  {syncing ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Swords className="w-4 h-4" />
-                  )}
-                  Generate Semi-Finals from Standings
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleUpdateSemiFinals}
+                    disabled={syncing || !allLeagueComplete}
+                    className="flex-1 flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-600/30 disabled:text-purple-300/50 text-white font-medium text-sm py-3 px-4 rounded-lg transition-colors"
+                  >
+                    {syncing ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Swords className="w-4 h-4" />
+                    )}
+                    Generate Semi-Finals
+                  </button>
+                  <button
+                    onClick={handleResetKnockout}
+                    disabled={syncing}
+                    className="flex items-center justify-center gap-2 bg-red-600/20 hover:bg-red-600/40 text-red-400 font-medium text-sm py-3 px-4 rounded-lg transition-colors border border-red-500/30"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    Reset
+                  </button>
+                </div>
               </>
             )}
 

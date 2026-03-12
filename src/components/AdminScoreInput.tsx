@@ -14,6 +14,7 @@ import {
   Undo2,
   ArrowLeftRight,
   Lock,
+  RefreshCw,
 } from "lucide-react";
 
 type Role = "scorer" | "super_admin";
@@ -177,9 +178,16 @@ export default function AdminScoreInput({
     value: string
   ) => {
     const num = Math.max(0, Math.min(30, parseInt(value) || 0));
+    const otherTeam = team === "team1_score" ? "team2_score" : "team1_score";
+    const otherScore = scores[setIdx][otherTeam];
+    // Validate badminton rules: max 21 unless deuce (both >= 20), then max 30
+    let clamped = num;
+    if (otherScore < 20) {
+      clamped = Math.min(num, 21);
+    }
     setScores((prev) =>
       prev.map((s, i) =>
-        i === setIdx ? { ...s, [team]: num } : s
+        i === setIdx ? { ...s, [team]: clamped } : s
       )
     );
   };
@@ -616,6 +624,42 @@ export default function AdminScoreInput({
               {saving ? "Pushing..." : "Live Update"}
             </button>
           </div>
+          )}
+
+          {/* Reset Match — Super Admin only */}
+          {isSuperAdmin && (
+            <button
+              onClick={async () => {
+                if (!window.confirm("Reset all scores and status for this match?")) return;
+                setSaving(true);
+                if (!demoMode) {
+                  const resetScores = sets.map((s) =>
+                    supabase
+                      .from("set_scores")
+                      .update({ team1_score: 0, team2_score: 0 })
+                      .eq("id", s.id)
+                  );
+                  await Promise.all([
+                    ...resetScores,
+                    supabase
+                      .from("matches")
+                      .update({ status: "upcoming", winner_team_id: null })
+                      .eq("id", match.id),
+                  ]);
+                }
+                setScores((prev) => prev.map((s) => ({ ...s, team1_score: 0, team2_score: 0 })));
+                setStatus("upcoming");
+                setHistory([]);
+                setActiveSet(0);
+                setSaving(false);
+                onUpdate();
+              }}
+              disabled={saving}
+              className="w-full flex items-center justify-center gap-2 bg-red-600/10 hover:bg-red-600/20 text-red-400 text-xs font-medium py-2 rounded-lg transition-colors border border-red-500/20"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Reset Match
+            </button>
           )}
         </div>
       )}
