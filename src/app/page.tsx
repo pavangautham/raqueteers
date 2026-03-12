@@ -17,6 +17,8 @@ import {
   BadgeInfo,
   BookOpen,
   Gamepad2,
+  ImageIcon,
+  Shield,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -105,45 +107,58 @@ export default function Home() {
     <main className="min-h-screen pb-20">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-gray-950/90 backdrop-blur-xl border-b border-gray-800/50">
-        <div className="max-w-5xl mx-auto px-4 py-4">
+        <div className="max-w-5xl mx-auto px-4 py-3 sm:py-4">
+          {/* Top row: logo + live status (mobile) / logo + nav + status (desktop) */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <span className="text-lg">🏸</span>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shrink-0">
+                <span className="text-base sm:text-lg">🏸</span>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white tracking-tight">
+                <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">
                   Raqueteers
                 </h1>
-                <p className="text-[10px] text-gray-500 uppercase tracking-widest">
+                <p className="text-[9px] sm:text-[10px] text-gray-500 uppercase tracking-widest">
                   Badminton Tournament 2026
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 sm:gap-3">
+            {/* Desktop nav links */}
+            <div className="hidden sm:flex items-center gap-3">
               <Link
                 href="/guide"
-                className="flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-[11px] font-medium transition-colors"
-                title="Guide"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-[11px] font-medium transition-colors"
               >
                 <BadgeInfo className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Guide</span>
+                Guide
               </Link>
               <Link
                 href="/rules"
-                className="flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-[11px] font-medium transition-colors"
-                title="Rules"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-[11px] font-medium transition-colors"
               >
                 <BookOpen className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Rules</span>
+                Rules
               </Link>
               <Link
                 href="/demo"
-                className="flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-[11px] font-medium transition-colors"
-                title="Demo"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-[11px] font-medium transition-colors"
               >
                 <Gamepad2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Demo</span>
+                Demo
+              </Link>
+              <Link
+                href="/gallery"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-[11px] font-medium transition-colors"
+              >
+                <ImageIcon className="w-3.5 h-3.5" />
+                Gallery
+              </Link>
+              <Link
+                href="/admin"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-[11px] font-medium transition-colors"
+              >
+                <Shield className="w-3.5 h-3.5" />
+                Admin
               </Link>
               {connected ? (
                 <span className="flex items-center gap-1 text-[10px] text-emerald-400">
@@ -155,6 +170,56 @@ export default function Home() {
                 </span>
               )}
             </div>
+            {/* Mobile live status */}
+            <div className="sm:hidden">
+              {connected ? (
+                <span className="flex items-center gap-1 text-[10px] text-emerald-400">
+                  <Wifi className="w-3 h-3" /> Live
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-[10px] text-red-400">
+                  <WifiOff className="w-3 h-3" /> Offline
+                </span>
+              )}
+            </div>
+          </div>
+          {/* Mobile nav row */}
+          <div className="flex sm:hidden items-center gap-1.5 mt-2.5 -mx-0.5">
+            <Link
+              href="/guide"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-[11px] font-medium transition-colors"
+            >
+              <BadgeInfo className="w-3 h-3" />
+              Guide
+            </Link>
+            <Link
+              href="/rules"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-[11px] font-medium transition-colors"
+            >
+              <BookOpen className="w-3 h-3" />
+              Rules
+            </Link>
+            <Link
+              href="/demo"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-[11px] font-medium transition-colors"
+            >
+              <Gamepad2 className="w-3 h-3" />
+              Demo
+            </Link>
+            <Link
+              href="/gallery"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-[11px] font-medium transition-colors"
+            >
+              <ImageIcon className="w-3 h-3" />
+              Gallery
+            </Link>
+            <Link
+              href="/admin"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-[11px] font-medium transition-colors"
+            >
+              <Shield className="w-3 h-3" />
+              Admin
+            </Link>
           </div>
         </div>
       </header>

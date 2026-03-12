@@ -198,6 +198,12 @@ export default function AdminScoreInput({
   };
 
   const handleSave = async () => {
+    if (status === "completed") {
+      const confirmed = window.confirm(
+        "Are you sure you want to mark this match as Completed? The match will be locked and scores can no longer be edited."
+      );
+      if (!confirmed) return;
+    }
     setSaving(true);
     try {
       // In demo mode, skip all DB writes

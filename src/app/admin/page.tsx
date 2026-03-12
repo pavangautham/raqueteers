@@ -22,7 +22,9 @@ import {
   Crown,
   User,
   AlertTriangle,
+  ArrowLeft,
 } from "lucide-react";
+import Link from "next/link";
 
 type Role = "scorer" | "super_admin";
 
@@ -310,6 +312,13 @@ export default function AdminPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Link
+              href="/"
+              className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+              title="Back to Home"
+            >
+              <ArrowLeft className="w-4 h-4 text-gray-400" />
+            </Link>
             <button
               onClick={fetchData}
               className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"

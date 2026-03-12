@@ -170,10 +170,7 @@ export default function RulesPage() {
           <BulletItem>
             In the 3rd set (if played), teams change ends when the leading score reaches <strong className="text-white">11 points</strong>.
           </BulletItem>
-          <BulletItem>
-            A <strong className="text-white">60-second interval</strong> is allowed when the leading score reaches 11 in any set.
-          </BulletItem>
-          <BulletItem>
+<BulletItem>
             A <strong className="text-white">2-minute interval</strong> is allowed between sets.
           </BulletItem>
         </RuleCard>
