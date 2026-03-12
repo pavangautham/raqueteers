@@ -429,7 +429,7 @@ export default function AdminScoreInput({
                   disabled={leftDisabled}
                   className="flex flex-col items-center gap-2 py-5 rounded-2xl bg-blue-600/10 border-2 border-blue-500/40 active:scale-95 active:bg-blue-600/25 transition-all select-none disabled:cursor-not-allowed disabled:active:scale-100"
                 >
-                  <span className="text-xs text-blue-300 font-medium text-center px-2 truncate w-full">
+                  <span className="text-xs text-blue-300 font-medium text-center px-2 w-full break-words leading-snug">
                     {leftTeam ? `${leftTeam.player1} & ${leftTeam.player2}` : "TBD"}
                   </span>
                   <div className="flex items-center gap-2">
@@ -444,7 +444,7 @@ export default function AdminScoreInput({
                   disabled={rightDisabled}
                   className="flex flex-col items-center gap-2 py-5 rounded-2xl bg-orange-600/10 border-2 border-orange-500/40 active:scale-95 active:bg-orange-600/25 transition-all select-none disabled:cursor-not-allowed disabled:active:scale-100"
                 >
-                  <span className="text-xs text-orange-300 font-medium text-center px-2 truncate w-full">
+                  <span className="text-xs text-orange-300 font-medium text-center px-2 w-full break-words leading-snug">
                     {rightTeam ? `${rightTeam.player1} & ${rightTeam.player2}` : "TBD"}
                   </span>
                   <div className="flex items-center gap-2">
