@@ -111,6 +111,9 @@ export default function RulesPage() {
           <BulletItem>
             All matches are <strong className="text-white">doubles</strong> format (2 players per team).
           </BulletItem>
+          <BulletItem>
+            A <strong className="text-white">new shuttle</strong> will be provided at the start of each match. The same shuttle is to be used for all sets within that match.
+          </BulletItem>
         </RuleCard>
 
         {/* Scoring & Points */}
