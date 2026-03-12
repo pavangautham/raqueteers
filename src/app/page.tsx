@@ -288,8 +288,8 @@ export default function Home() {
               ))
             )}
             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <StandingsTable standings={standingsA} groupName="A" />
-              <StandingsTable standings={standingsB} groupName="B" />
+              <StandingsTable standings={standingsA} groupName="A" matches={matches} teamMap={teamMap} />
+              <StandingsTable standings={standingsB} groupName="B" matches={matches} teamMap={teamMap} />
             </div>
           </div>
         )}
