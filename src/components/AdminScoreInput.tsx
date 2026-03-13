@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Match, Team } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
+import ConfirmModal from "./ConfirmModal";
 import {
   Save,
   Radio,
@@ -79,6 +80,17 @@ export default function AdminScoreInput({
     team: "team1_score" | "team2_score";
   } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Confirm modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    title: string;
+    message: string;
+    confirmLabel: string;
+    variant: "danger" | "warning";
+    onConfirm: () => void;
+  } | null>(null);
+
+  const closeModal = useCallback(() => setConfirmModal(null), []);
 
   // History for undo (stores last 20 actions)
   const [history, setHistory] = useState<typeof scores[]>([]);
@@ -218,13 +230,7 @@ export default function AdminScoreInput({
     setEditingScore(null);
   };
 
-  const handleSave = async () => {
-    if (status === "completed") {
-      const confirmed = window.confirm(
-        "Are you sure you want to mark this match as Completed? The match will be locked and scores can no longer be edited."
-      );
-      if (!confirmed) return;
-    }
+  const doSave = async () => {
     setSaving(true);
     try {
       // In demo mode, skip all DB writes
@@ -280,6 +286,24 @@ export default function AdminScoreInput({
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSave = () => {
+    if (status === "completed") {
+      setConfirmModal({
+        title: "Complete Match",
+        message:
+          "Are you sure you want to mark this match as Completed? The match will be locked and scores can no longer be edited.",
+        confirmLabel: "Complete",
+        variant: "warning",
+        onConfirm: () => {
+          setConfirmModal(null);
+          doSave();
+        },
+      });
+      return;
+    }
+    doSave();
   };
 
   const courtColor =
@@ -642,30 +666,38 @@ export default function AdminScoreInput({
           {/* Reset Match — Super Admin only */}
           {isSuperAdmin && (
             <button
-              onClick={async () => {
-                if (!window.confirm("Reset all scores and status for this match?")) return;
-                setSaving(true);
-                if (!demoMode) {
-                  const resetScores = sets.map((s) =>
-                    supabase
-                      .from("set_scores")
-                      .update({ team1_score: 0, team2_score: 0 })
-                      .eq("id", s.id)
-                  );
-                  await Promise.all([
-                    ...resetScores,
-                    supabase
-                      .from("matches")
-                      .update({ status: "upcoming", winner_team_id: null })
-                      .eq("id", match.id),
-                  ]);
-                }
-                setScores((prev) => prev.map((s) => ({ ...s, team1_score: 0, team2_score: 0 })));
-                setStatus("upcoming");
-                setHistory([]);
-                setActiveSet(0);
-                setSaving(false);
-                onUpdate();
+              onClick={() => {
+                setConfirmModal({
+                  title: "Reset Match",
+                  message: "Reset all scores and status for this match? This cannot be undone.",
+                  confirmLabel: "Reset",
+                  variant: "danger",
+                  onConfirm: async () => {
+                    setConfirmModal(null);
+                    setSaving(true);
+                    if (!demoMode) {
+                      const resetScores = sets.map((s) =>
+                        supabase
+                          .from("set_scores")
+                          .update({ team1_score: 0, team2_score: 0 })
+                          .eq("id", s.id)
+                      );
+                      await Promise.all([
+                        ...resetScores,
+                        supabase
+                          .from("matches")
+                          .update({ status: "upcoming", winner_team_id: null })
+                          .eq("id", match.id),
+                      ]);
+                    }
+                    setScores((prev) => prev.map((s) => ({ ...s, team1_score: 0, team2_score: 0 })));
+                    setStatus("upcoming");
+                    setHistory([]);
+                    setActiveSet(0);
+                    setSaving(false);
+                    onUpdate();
+                  },
+                });
               }}
               disabled={saving}
               className="w-full flex items-center justify-center gap-2 bg-red-600/10 hover:bg-red-600/20 text-red-400 text-xs font-medium py-2 rounded-lg transition-colors border border-red-500/20"
@@ -676,6 +708,16 @@ export default function AdminScoreInput({
           )}
         </div>
       )}
+
+      <ConfirmModal
+        open={confirmModal !== null}
+        title={confirmModal?.title ?? ""}
+        message={confirmModal?.message ?? ""}
+        confirmLabel={confirmModal?.confirmLabel}
+        variant={confirmModal?.variant}
+        onConfirm={confirmModal?.onConfirm ?? closeModal}
+        onCancel={closeModal}
+      />
     </div>
   );
 }
