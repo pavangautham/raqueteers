@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { Standing, Match, Team } from "@/lib/types";
 import {
   Trophy,
@@ -121,9 +121,8 @@ export default function StandingsTable({
               const isExpanded = expandedTeamId === s.team.id;
               const teamMatches = isExpanded ? getTeamMatches(s.team.id) : [];
               return (
-                <>
+                <Fragment key={s.team.id}>
                   <tr
-                    key={s.team.id}
                     onClick={() =>
                       setExpandedTeamId(isExpanded ? null : s.team.id)
                     }
@@ -235,7 +234,7 @@ export default function StandingsTable({
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               );
             })}
           </tbody>
