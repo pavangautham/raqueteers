@@ -172,6 +172,22 @@ export default function AdminScoreInput({
     );
   };
 
+  /**
+   * Clamp a score pair to valid badminton rules.
+   * - Max 21 if opponent < 20
+   * - In deuce (both >= 20), max 30, and win by 2 (so max is opponent + 2, capped at 30)
+   */
+  const clampBadmintonScore = (myScore: number, otherScore: number) => {
+    let my = Math.max(0, Math.min(30, myScore));
+    if (otherScore < 20) {
+      my = Math.min(my, 21);
+    } else {
+      // Deuce territory: can't lead by more than 2, capped at 30
+      my = Math.min(my, Math.max(21, otherScore + 2), 30);
+    }
+    return my;
+  };
+
   const handleDirectEdit = (
     setIdx: number,
     team: "team1_score" | "team2_score",
@@ -179,16 +195,13 @@ export default function AdminScoreInput({
   ) => {
     const num = Math.max(0, Math.min(30, parseInt(value) || 0));
     const otherTeam = team === "team1_score" ? "team2_score" : "team1_score";
-    const otherScore = scores[setIdx][otherTeam];
-    // Validate badminton rules: max 21 unless deuce (both >= 20), then max 30
-    let clamped = num;
-    if (otherScore < 20) {
-      clamped = Math.min(num, 21);
-    }
     setScores((prev) =>
-      prev.map((s, i) =>
-        i === setIdx ? { ...s, [team]: clamped } : s
-      )
+      prev.map((s, i) => {
+        if (i !== setIdx) return s;
+        const otherScore = s[otherTeam];
+        const clamped = clampBadmintonScore(num, otherScore);
+        return { ...s, [team]: clamped };
+      })
     );
   };
 
