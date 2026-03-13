@@ -212,6 +212,9 @@ export default function RulesPage() {
             Each match will have an assigned <strong className="text-white">Umpire</strong> and <strong className="text-white">2 Line Umpires</strong> as per the schedule.
           </BulletItem>
           <BulletItem>
+            For <strong className="text-white">line calls</strong>, the <strong className="text-white">base (cork/bush)</strong> of the shuttle is the point of contact — not the feathers. If the base lands on or inside the line, it is <strong className="text-white">IN</strong>.
+          </BulletItem>
+          <BulletItem>
             The <strong className="text-white">umpire&apos;s decision is final</strong> on all calls. No arguments or appeals.
           </BulletItem>
         </RuleCard>
