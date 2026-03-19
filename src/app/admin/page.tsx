@@ -10,6 +10,7 @@ import {
 } from "@/utils/calculateStandings";
 import AdminScoreInput from "@/components/AdminScoreInput";
 import StandingsTable from "@/components/StandingsTable";
+import FinalStandings from "@/components/FinalStandings";
 import {
   Shield,
   Filter,
@@ -49,6 +50,36 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+
+  // --- Feature: Keep screen awake ---
+  useEffect(() => {
+    if (!role) return;
+    const requestWakeLock = async () => {
+      try {
+        if ("wakeLock" in navigator) {
+          wakeLockRef.current = await navigator.wakeLock.request("screen");
+        }
+      } catch {
+        // Wake Lock not supported or denied — ignore
+      }
+    };
+    requestWakeLock();
+
+    // Re-acquire on visibility change (e.g. tab switch back)
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        requestWakeLock();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      wakeLockRef.current?.release();
+      wakeLockRef.current = null;
+    };
+  }, [role]);
 
   const handlePinSubmit = () => {
     if (pin === SUPER_ADMIN_PIN) {
@@ -433,6 +464,14 @@ export default function AdminPage() {
               <StandingsTable standings={standingsA} groupName="A" />
               <StandingsTable standings={standingsB} groupName="B" />
             </div>
+
+            {/* Overall Standings — shows when any knockout match is completed */}
+            <FinalStandings
+              standingsA={standingsA}
+              standingsB={standingsB}
+              matches={matches}
+              teams={teams}
+            />
           </>
         )}
 

@@ -33,8 +33,15 @@ export default memo(function MatchCard({ match, teamMap }: MatchCardProps) {
   const { setsT1, setsT2 } = useMemo(() => {
     let t1 = 0, t2 = 0;
     for (const s of sets) {
-      if (s.team1_score > s.team2_score) t1++;
-      else if (s.team2_score > s.team1_score) t2++;
+      const a = s.team1_score, b = s.team2_score;
+      // Set is complete only if: 21+ with 2-point lead, or either reached 30
+      const setComplete =
+        (a >= 21 && a - b >= 2) ||
+        (b >= 21 && b - a >= 2) ||
+        a >= 30 || b >= 30;
+      if (!setComplete) continue;
+      if (a > b) t1++;
+      else if (b > a) t2++;
     }
     return { setsT1: t1, setsT2: t2 };
   }, [sets]);

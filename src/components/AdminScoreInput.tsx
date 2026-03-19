@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Match, Team } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
 import ConfirmModal from "./ConfirmModal";
@@ -16,6 +16,8 @@ import {
   ArrowLeftRight,
   Lock,
   RefreshCw,
+  Timer,
+  Circle,
 } from "lucide-react";
 
 type Role = "scorer" | "super_admin";
@@ -95,6 +97,85 @@ export default function AdminScoreInput({
   // History for undo (stores last 20 actions)
   const [history, setHistory] = useState<typeof scores[]>([]);
 
+  // --- Feature: Visual flash feedback ---
+  const [flashSide, setFlashSide] = useState<"left" | "right" | null>(null);
+
+  // --- Feature: Serving indicator ---
+  const [servingTeam, setServingTeam] = useState<"left" | "right">("left");
+
+  // --- Feature: Match timer ---
+  const [liveStartTime, setLiveStartTime] = useState<number | null>(
+    match.status === "live" ? Date.now() : null
+  );
+  const [elapsed, setElapsed] = useState(0);
+
+  // --- Feature: Unsaved changes tracking ---
+  const [savedScores] = useState(() =>
+    sets.length > 0
+      ? sets.map((s) => ({
+          set_number: s.set_number,
+          team1_score: s.team1_score,
+          team2_score: s.team2_score,
+        }))
+      : [1, 2, 3].map((n) => ({
+          set_number: n,
+          team1_score: 0,
+          team2_score: 0,
+        }))
+  );
+  const [savedStatus] = useState(match.status);
+
+  const hasUnsavedChanges =
+    status !== savedStatus ||
+    scores.some(
+      (s, i) =>
+        s.team1_score !== savedScores[i]?.team1_score ||
+        s.team2_score !== savedScores[i]?.team2_score
+    );
+
+  // --- Feature: Swipe between sets ---
+  const swipeRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diff = e.changedTouches[0].clientX - touchStartX.current;
+    const threshold = 60;
+    if (Math.abs(diff) > threshold) {
+      if (diff < 0 && activeSet < 2) {
+        // Swipe left → next set
+        const nextIdx = activeSet + 1;
+        if (isSetAvailable(nextIdx)) setActiveSet(nextIdx);
+      } else if (diff > 0 && activeSet > 0) {
+        // Swipe right → previous set
+        setActiveSet(activeSet - 1);
+      }
+    }
+    touchStartX.current = null;
+  };
+
+  // Timer effect
+  useEffect(() => {
+    if (status !== "live" || !liveStartTime) {
+      setElapsed(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - liveStartTime) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [status, liveStartTime]);
+
+  const formatElapsed = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
+
   const pushHistory = () => {
     setHistory((prev) => [...prev.slice(-19), scores.map((s) => ({ ...s }))]);
   };
@@ -113,10 +194,8 @@ export default function AdminScoreInput({
   const isSetWon = (s: { team1_score: number; team2_score: number }) => {
     const a = s.team1_score;
     const b = s.team2_score;
-    // Normal win at 21+ with 2 point lead
     if (a >= 21 && a - b >= 2) return true;
     if (b >= 21 && b - a >= 2) return true;
-    // Cap: 30 wins regardless
     if (a >= 30 || b >= 30) return true;
     return false;
   };
@@ -128,10 +207,8 @@ export default function AdminScoreInput({
     s: { team1_score: number; team2_score: number },
     team: "team1_score" | "team2_score"
   ) => {
-    // If set already won, no more points
     if (isSetWon(s)) return false;
     const myScore = s[team];
-    // Hard cap at 30
     if (myScore >= 30) return false;
     return true;
   };
@@ -167,8 +244,7 @@ export default function AdminScoreInput({
    * Set 3 is only available if each team has won 1 set.
    */
   const isSetAvailable = (setIdx: number) => {
-    if (setIdx <= 1) return true; // Set 1 & 2 always available
-    // Set 3: only if score is 1-1 in sets
+    if (setIdx <= 1) return true;
     const { t1, t2 } = countSetsWon(scores.slice(0, 2));
     return t1 === 1 && t2 === 1;
   };
@@ -177,24 +253,54 @@ export default function AdminScoreInput({
     const s = scores[setIdx];
     if (!canIncrement(s, team)) return;
     pushHistory();
-    setScores((prev) =>
-      prev.map((sc, i) =>
-        i === setIdx ? { ...sc, [team]: sc[team] + 1 } : sc
-      )
+
+    const newScores = scores.map((sc, i) =>
+      i === setIdx ? { ...sc, [team]: sc[team] + 1 } : sc
     );
+    setScores(newScores);
+
+    // --- Feature: Visual flash ---
+    const isLeftKey = flipped ? "team2_score" : "team1_score";
+    const scoredSide: "left" | "right" = team === isLeftKey ? "left" : "right";
+    setFlashSide(scoredSide);
+    setTimeout(() => setFlashSide(null), 300);
+
+    // --- Feature: Serving indicator ---
+    // Badminton rule: the team that wins the rally (scores) serves next
+    setServingTeam(scoredSide);
+
+    // --- Feature: Auto-set status to live on first point ---
+    if (status === "upcoming") {
+      setStatus("live");
+      setLiveStartTime(Date.now());
+    }
+
+    // --- Feature: Auto-advance to next set ---
+    const updatedSet = newScores[setIdx];
+    if (isSetWon(updatedSet) && !isMatchDecided(newScores)) {
+      const nextIdx = setIdx + 1;
+      if (nextIdx < 3) {
+        // Check if set 3 is available with updated scores
+        if (nextIdx <= 1) {
+          setTimeout(() => setActiveSet(nextIdx), 400);
+        } else {
+          const { t1, t2 } = countSetsWon(newScores.slice(0, 2));
+          if (t1 === 1 && t2 === 1) {
+            setTimeout(() => setActiveSet(nextIdx), 400);
+          }
+        }
+      }
+    }
   };
 
   /**
    * Clamp a score pair to valid badminton rules.
-   * - Max 21 if opponent < 20
-   * - In deuce (both >= 20), max 30, and win by 2 (so max is opponent + 2, capped at 30)
    */
   const clampBadmintonScore = (myScore: number, otherScore: number) => {
     let my = Math.max(0, Math.min(30, myScore));
     if (otherScore < 20) {
       my = Math.min(my, 21);
     } else {
-      // Deuce territory: can't lead by more than 2, capped at 30
       my = Math.min(my, Math.max(21, otherScore + 2), 30);
     }
     return my;
@@ -233,15 +339,13 @@ export default function AdminScoreInput({
   const doSave = async () => {
     setSaving(true);
     try {
-      // In demo mode, skip all DB writes
       if (demoMode) {
-        await new Promise((r) => setTimeout(r, 300)); // simulate save delay
+        await new Promise((r) => setTimeout(r, 300));
         setHistory([]);
         onUpdate();
         return;
       }
 
-      // Build all score upsert promises in parallel
       const scorePromises = scores.map((score) => {
         const existing = sets.find((s) => s.set_number === score.set_number);
         if (existing) {
@@ -269,7 +373,6 @@ export default function AdminScoreInput({
         else if (wonT2 >= 2) winnerId = match.team2_id;
       }
 
-      // Fire all writes in parallel (scores + match status)
       await Promise.all([
         ...scorePromises,
         supabase
@@ -278,7 +381,6 @@ export default function AdminScoreInput({
           .eq("id", match.id),
       ]);
 
-      // Clear undo history after successful save
       setHistory([]);
       onUpdate();
     } catch (err) {
@@ -340,6 +442,10 @@ export default function AdminScoreInput({
             </span>
           </span>
           <div className="flex items-center gap-2 shrink-0 ml-auto">
+            {/* Unsaved changes indicator on collapsed header */}
+            {!expanded && hasUnsavedChanges && (
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            )}
             {match.status === "live" && (
               <span className="flex items-center gap-1 text-[10px] text-red-400 font-bold">
                 <Radio className="w-3 h-3 animate-pulse_live" /> LIVE
@@ -393,6 +499,15 @@ export default function AdminScoreInput({
             </div>
           )}
 
+          {/* Match Timer */}
+          {status === "live" && (
+            <div className="flex items-center justify-center gap-1.5 text-xs text-gray-400">
+              <Timer className="w-3.5 h-3.5" />
+              <span className="font-mono">{formatElapsed(elapsed)}</span>
+              <span className="text-gray-600">elapsed</span>
+            </div>
+          )}
+
           {/* Set Selector Tabs */}
           <div className="flex gap-2">
             {scores.map((s, idx) => {
@@ -412,7 +527,7 @@ export default function AdminScoreInput({
                 }`}
               >
                 Set {s.set_number}
-                {setDone && " ✓"}
+                {setDone && " \u2713"}
                 {(s.team1_score > 0 || s.team2_score > 0) && (
                   <span className="ml-1.5 text-xs opacity-70">
                     {s.team1_score}-{s.team2_score}
@@ -423,9 +538,8 @@ export default function AdminScoreInput({
             })}
           </div>
 
-          {/* Score Panel for Active Set */}
+          {/* Score Panel for Active Set — swipeable */}
           {current && (() => {
-            // Flip mapping — visual only, DB always uses team1/team2
             const leftTeam = flipped ? team2 : team1;
             const rightTeam = flipped ? team1 : team2;
             const leftKey: "team1_score" | "team2_score" = flipped ? "team2_score" : "team1_score";
@@ -436,7 +550,12 @@ export default function AdminScoreInput({
             const rightSets = flipped ? setsT1 : setsT2;
 
             return (
-            <div className="bg-gray-800/50 rounded-2xl p-5 space-y-4">
+            <div
+              ref={swipeRef}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              className="bg-gray-800/50 rounded-2xl p-5 space-y-4"
+            >
               {/* Flip Button */}
               <div className="flex items-center justify-center">
                 <button
@@ -478,14 +597,20 @@ export default function AdminScoreInput({
                 <button
                   onClick={() => increment(activeSet, leftKey)}
                   disabled={leftDisabled}
-                  className="flex flex-col items-center gap-2 py-5 rounded-2xl bg-blue-600/10 border-2 border-blue-500/40 active:scale-95 active:bg-blue-600/25 transition-all select-none disabled:cursor-not-allowed disabled:active:scale-100"
+                  className={`flex flex-col items-center gap-2 py-8 rounded-2xl bg-blue-600/10 border-2 border-blue-500/40 active:scale-95 active:bg-blue-600/25 transition-all select-none disabled:cursor-not-allowed disabled:active:scale-100 ${
+                    flashSide === "left" ? "score-flash" : ""
+                  }`}
                 >
+                  {/* Serving indicator */}
+                  {servingTeam === "left" && !allDisabled && (
+                    <Circle className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400" />
+                  )}
                   <span className="text-xs text-blue-300 font-medium text-center px-2 w-full break-words leading-snug">
                     {leftTeam ? `${leftTeam.player1} & ${leftTeam.player2}` : "TBD"}
                   </span>
                   <div className="flex items-center gap-2">
-                    <Plus className="w-6 h-6 text-blue-400" />
-                    <span className="text-3xl font-bold text-blue-400">1</span>
+                    <Plus className="w-7 h-7 text-blue-400" />
+                    <span className="text-4xl font-bold text-blue-400">1</span>
                   </div>
                 </button>
 
@@ -493,19 +618,41 @@ export default function AdminScoreInput({
                 <button
                   onClick={() => increment(activeSet, rightKey)}
                   disabled={rightDisabled}
-                  className="flex flex-col items-center gap-2 py-5 rounded-2xl bg-orange-600/10 border-2 border-orange-500/40 active:scale-95 active:bg-orange-600/25 transition-all select-none disabled:cursor-not-allowed disabled:active:scale-100"
+                  className={`flex flex-col items-center gap-2 py-8 rounded-2xl bg-orange-600/10 border-2 border-orange-500/40 active:scale-95 active:bg-orange-600/25 transition-all select-none disabled:cursor-not-allowed disabled:active:scale-100 ${
+                    flashSide === "right" ? "score-flash" : ""
+                  }`}
                 >
+                  {/* Serving indicator */}
+                  {servingTeam === "right" && !allDisabled && (
+                    <Circle className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400" />
+                  )}
                   <span className="text-xs text-orange-300 font-medium text-center px-2 w-full break-words leading-snug">
                     {rightTeam ? `${rightTeam.player1} & ${rightTeam.player2}` : "TBD"}
                   </span>
                   <div className="flex items-center gap-2">
-                    <Plus className="w-6 h-6 text-orange-400" />
-                    <span className="text-3xl font-bold text-orange-400">1</span>
+                    <Plus className="w-7 h-7 text-orange-400" />
+                    <span className="text-4xl font-bold text-orange-400">1</span>
                   </div>
                 </button>
               </div>
                 );
               })()}
+
+              {/* Serving indicator label */}
+              {!isLocked && !currentSetWon && (
+                <div className="flex items-center justify-center gap-1.5">
+                  <Circle className="w-2 h-2 fill-yellow-400 text-yellow-400" />
+                  <span className="text-[10px] text-gray-500">
+                    Service — tap to toggle
+                  </span>
+                  <button
+                    onClick={() => setServingTeam((prev) => (prev === "left" ? "right" : "left"))}
+                    className="text-[10px] text-blue-400 hover:text-blue-300 ml-1 underline underline-offset-2"
+                  >
+                    switch
+                  </button>
+                </div>
+              )}
 
               {/* Live Score Display — tap to manually edit */}
               <div className={`grid grid-cols-[1fr,auto,1fr] gap-3 items-center ${isLocked ? "opacity-40 pointer-events-none" : ""}`}>
@@ -522,19 +669,19 @@ export default function AdminScoreInput({
                     }
                     onBlur={finishEdit}
                     onKeyDown={(e) => e.key === "Enter" && finishEdit()}
-                    className="h-16 bg-gray-900 border-2 border-blue-500 rounded-xl text-center text-white font-mono text-3xl font-bold focus:outline-none"
+                    className="h-20 w-full min-w-0 bg-gray-900 border-2 border-blue-500 rounded-xl text-center text-white font-mono text-4xl font-bold focus:outline-none"
                     autoFocus
                   />
                 ) : !isLocked ? (
                   <button
                     onClick={() => startEdit(activeSet, leftKey)}
-                    className="h-16 bg-gray-900/80 border border-gray-700 rounded-xl flex items-center justify-center text-white font-mono text-3xl font-bold hover:border-blue-500/50 transition-colors"
+                    className="h-20 w-full min-w-0 bg-gray-900/80 border border-gray-700 rounded-xl flex items-center justify-center text-white font-mono text-4xl font-bold hover:border-blue-500/50 transition-colors"
                     title="Tap to edit score"
                   >
                     {leftScore}
                   </button>
                 ) : (
-                  <div className="h-16 bg-gray-900/80 border border-gray-700 rounded-xl flex items-center justify-center text-white font-mono text-3xl font-bold">
+                  <div className="h-20 w-full min-w-0 bg-gray-900/80 border border-gray-700 rounded-xl flex items-center justify-center text-white font-mono text-4xl font-bold">
                     {leftScore}
                   </div>
                 )}
@@ -543,7 +690,7 @@ export default function AdminScoreInput({
                 <button
                   onClick={undo}
                   disabled={isLocked || history.length === 0}
-                  className="w-12 h-12 rounded-full bg-gray-800 border border-gray-600 flex items-center justify-center text-gray-300 hover:text-white disabled:opacity-20 disabled:cursor-not-allowed active:scale-90 transition-all"
+                  className="w-12 h-12 shrink-0 rounded-full bg-gray-800 border border-gray-600 flex items-center justify-center text-gray-300 hover:text-white disabled:opacity-20 disabled:cursor-not-allowed active:scale-90 transition-all"
                   title="Undo last point"
                 >
                   <Undo2 className="w-5 h-5" />
@@ -562,19 +709,19 @@ export default function AdminScoreInput({
                     }
                     onBlur={finishEdit}
                     onKeyDown={(e) => e.key === "Enter" && finishEdit()}
-                    className="h-16 bg-gray-900 border-2 border-blue-500 rounded-xl text-center text-white font-mono text-3xl font-bold focus:outline-none"
+                    className="h-20 w-full min-w-0 bg-gray-900 border-2 border-blue-500 rounded-xl text-center text-white font-mono text-4xl font-bold focus:outline-none"
                     autoFocus
                   />
                 ) : !isLocked ? (
                   <button
                     onClick={() => startEdit(activeSet, rightKey)}
-                    className="h-16 bg-gray-900/80 border border-gray-700 rounded-xl flex items-center justify-center text-white font-mono text-3xl font-bold hover:border-orange-500/50 transition-colors"
+                    className="h-20 w-full min-w-0 bg-gray-900/80 border border-gray-700 rounded-xl flex items-center justify-center text-white font-mono text-4xl font-bold hover:border-orange-500/50 transition-colors"
                     title="Tap to edit score"
                   >
                     {rightScore}
                   </button>
                 ) : (
-                  <div className="h-16 bg-gray-900/80 border border-gray-700 rounded-xl flex items-center justify-center text-white font-mono text-3xl font-bold">
+                  <div className="h-20 w-full min-w-0 bg-gray-900/80 border border-gray-700 rounded-xl flex items-center justify-center text-white font-mono text-4xl font-bold">
                     {rightScore}
                   </div>
                 )}
@@ -582,7 +729,7 @@ export default function AdminScoreInput({
 
               {!isLocked && (
               <p className="text-[10px] text-gray-600 text-center">
-                Tap score to edit manually &bull; Undo reverts last action
+                Tap score to edit manually &bull; Undo reverts last action &bull; Swipe to switch sets
               </p>
               )}
             </div>
@@ -640,18 +787,27 @@ export default function AdminScoreInput({
           <div className="flex items-center gap-3">
             <select
               value={status}
-              onChange={(e) => setStatus(e.target.value as Match["status"])}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+              onChange={(e) => {
+                const newStatus = e.target.value as Match["status"];
+                if (!isSuperAdmin && newStatus === "completed" && !matchDecided) return;
+                setStatus(newStatus);
+                if (newStatus === "live" && !liveStartTime) {
+                  setLiveStartTime(Date.now());
+                }
+              }}
+              className="shrink-0 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
             >
               <option value="upcoming">Upcoming</option>
               <option value="live">Live</option>
-              <option value="completed">Completed</option>
+              <option value="completed" disabled={!isSuperAdmin && !matchDecided}>
+                Completed
+              </option>
             </select>
 
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 text-white font-bold text-sm py-2.5 px-4 rounded-lg transition-colors active:scale-[0.98]"
+              className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 text-white font-bold text-sm py-2.5 px-4 rounded-lg transition-colors active:scale-[0.98] relative"
             >
               {saving ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -659,6 +815,10 @@ export default function AdminScoreInput({
                 <Save className="w-4 h-4" />
               )}
               {saving ? "Pushing..." : "Live Update"}
+              {/* Unsaved changes dot */}
+              {hasUnsavedChanges && !saving && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-red-500 border-2 border-gray-900 animate-pulse" />
+              )}
             </button>
           </div>
           )}
@@ -694,6 +854,7 @@ export default function AdminScoreInput({
                     setStatus("upcoming");
                     setHistory([]);
                     setActiveSet(0);
+                    setLiveStartTime(null);
                     setSaving(false);
                     onUpdate();
                   },

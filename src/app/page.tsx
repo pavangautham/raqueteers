@@ -8,6 +8,7 @@ import { calculateStandings } from "@/utils/calculateStandings";
 import MatchCard from "@/components/MatchCard";
 import StandingsTable from "@/components/StandingsTable";
 import KnockoutBracket from "@/components/KnockoutBracket";
+import FinalStandings from "@/components/FinalStandings";
 import {
   Radio,
   Trophy,
@@ -287,6 +288,12 @@ export default function Home() {
                 <MatchCard key={m.id} match={m} teamMap={teamMap} />
               ))
             )}
+            <FinalStandings
+              standingsA={standingsA}
+              standingsB={standingsB}
+              matches={matches}
+              teams={teams}
+            />
             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
               <StandingsTable standings={standingsA} groupName="A" matches={matches} teamMap={teamMap} />
               <StandingsTable standings={standingsB} groupName="B" matches={matches} teamMap={teamMap} />
@@ -319,14 +326,30 @@ export default function Home() {
         )}
 
         {tab === "standings" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <StandingsTable standings={standingsA} groupName="A" />
-            <StandingsTable standings={standingsB} groupName="B" />
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <StandingsTable standings={standingsA} groupName="A" />
+              <StandingsTable standings={standingsB} groupName="B" />
+            </div>
+            <FinalStandings
+              standingsA={standingsA}
+              standingsB={standingsB}
+              matches={matches}
+              teams={teams}
+            />
           </div>
         )}
 
         {tab === "knockout" && (
-          <KnockoutBracket matches={knockoutMatches} teamMap={teamMap} />
+          <div className="space-y-6">
+            <KnockoutBracket matches={knockoutMatches} teamMap={teamMap} />
+            <FinalStandings
+              standingsA={standingsA}
+              standingsB={standingsB}
+              matches={matches}
+              teams={teams}
+            />
+          </div>
         )}
       </div>
     </main>
