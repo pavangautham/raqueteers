@@ -10,8 +10,9 @@ const config: Config = {
     extend: {
       colors: {
         court: {
-          2: "#2563eb",
-          3: "#16a34a",
+          1: "#2563eb",
+          2: "#16a34a",
+          3: "#f59e0b",
         },
       },
       animation: {

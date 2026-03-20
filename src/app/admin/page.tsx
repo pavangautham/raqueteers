@@ -42,7 +42,7 @@ export default function AdminPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
   const [courtFilter, setCourtFilter] = useState<
-    "all" | "Court 2" | "Court 3"
+    "all" | "Court 1" | "Court 2"
   >("all");
   const [roundFilter, setRoundFilter] = useState<"league" | "knockout">(
     "league"
@@ -332,36 +332,31 @@ export default function AdminPage() {
     <main className="min-h-screen pb-20">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-gray-950/90 backdrop-blur-xl border-b border-gray-800/50">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+              className={`w-9 h-9 shrink-0 rounded-xl flex items-center justify-center ${
                 isSuperAdmin
                   ? "bg-gradient-to-br from-amber-500 to-orange-600"
                   : "bg-gradient-to-br from-blue-500 to-cyan-600"
               }`}
             >
               {isSuperAdmin ? (
-                <Crown className="w-5 h-5 text-white" />
+                <Crown className="w-4 h-4 text-white" />
               ) : (
-                <User className="w-5 h-5 text-white" />
+                <User className="w-4 h-4 text-white" />
               )}
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-white flex items-center gap-2">
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-lg font-bold text-white truncate">
                 {isSuperAdmin ? "Super Admin" : "Scorer"}
-                {isSuperAdmin && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium">
-                    Pavan & Manyutej
-                  </span>
-                )}
               </h1>
-              <p className="text-[10px] text-gray-500 uppercase tracking-widest">
-                Raqueteers Tournament Control
+              <p className="text-[9px] sm:text-[10px] text-gray-500 uppercase tracking-widest truncate">
+                Raqueteers Tournament
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 shrink-0">
             <Link
               href="/"
               className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
@@ -427,15 +422,15 @@ export default function AdminPage() {
             {/* Court Filter */}
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-gray-500" />
-              {(["all", "Court 2", "Court 3"] as const).map((c) => (
+              {(["all", "Court 1", "Court 2"] as const).map((c) => (
                 <button
                   key={c}
                   onClick={() => setCourtFilter(c)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                     courtFilter === c
-                      ? c === "Court 2"
+                      ? c === "Court 1"
                         ? "bg-blue-600/20 text-blue-400 ring-1 ring-blue-500/30"
-                        : c === "Court 3"
+                        : c === "Court 2"
                         ? "bg-green-600/20 text-green-400 ring-1 ring-green-500/30"
                         : "bg-white/10 text-white"
                       : "bg-gray-800 text-gray-500 hover:text-gray-300"

@@ -203,7 +203,7 @@ export default function RulesPage() {
           title="Courts & Officials"
         >
           <BulletItem>
-            League matches will be played across <strong className="text-white">Court 2</strong> (Group A) and <strong className="text-white">Court 3</strong> (Group B) simultaneously.
+            League matches will be played across <strong className="text-white">Court 2</strong> (Group A) and <strong className="text-white">Court 1</strong> (Group B) simultaneously.
           </BulletItem>
           <BulletItem>
             All knockout matches (Semi-Finals & Final) will be played on <strong className="text-white">Court 3</strong>.

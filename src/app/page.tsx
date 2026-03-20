@@ -27,7 +27,7 @@ export default function Home() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
   const [connected, setConnected] = useState(false);
-  const [tab, setTab] = useState<"live" | "court2" | "court3" | "standings" | "knockout">("live");
+  const [tab, setTab] = useState<"live" | "court1" | "court2" | "standings" | "knockout">("live");
 
   // Debounce timer ref to avoid hammering Supabase on rapid changes
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -75,14 +75,15 @@ export default function Home() {
     () => matches.filter((m) => m.status === "live"),
     [matches]
   );
+  const court1Matches = useMemo(
+    () => matches.filter((m) => m.court === "Court 1" && m.round === "league"),
+    [matches]
+  );
   const court2Matches = useMemo(
     () => matches.filter((m) => m.court === "Court 2" && m.round === "league"),
     [matches]
   );
-  const court3Matches = useMemo(
-    () => matches.filter((m) => m.court === "Court 3" && m.round === "league"),
-    [matches]
-  );
+
   const knockoutMatches = useMemo(
     () => matches.filter((m) => m.round !== "league"),
     [matches]
@@ -244,8 +245,8 @@ export default function Home() {
           <div className="flex gap-1 overflow-x-auto py-2 no-scrollbar">
             {[
               { key: "live", label: "Live", icon: Radio },
+              { key: "court1", label: "Court 1", icon: LayoutGrid },
               { key: "court2", label: "Court 2", icon: LayoutGrid },
-              { key: "court3", label: "Court 3", icon: LayoutGrid },
               { key: "standings", label: "Standings", icon: Trophy },
               { key: "knockout", label: "Knockout", icon: BadgeInfo },
             ].map(({ key, label, icon: Icon }) => (
@@ -301,25 +302,25 @@ export default function Home() {
           </div>
         )}
 
-        {tab === "court2" && (
+        {tab === "court1" && (
           <div className="space-y-3">
             <h2 className="text-sm font-bold text-blue-400 flex items-center gap-2 mb-4">
               <div className="w-2 h-2 rounded-full bg-blue-500" />
-              Court 2 — Group A
+              Court 1 — Group B
             </h2>
-            {court2Matches.map((m) => (
+            {court1Matches.map((m) => (
               <MatchCard key={m.id} match={m} teamMap={teamMap} />
             ))}
           </div>
         )}
 
-        {tab === "court3" && (
+        {tab === "court2" && (
           <div className="space-y-3">
             <h2 className="text-sm font-bold text-green-400 flex items-center gap-2 mb-4">
               <div className="w-2 h-2 rounded-full bg-green-500" />
-              Court 3 — Group B
+              Court 2 — Group A
             </h2>
-            {court3Matches.map((m) => (
+            {court2Matches.map((m) => (
               <MatchCard key={m.id} match={m} teamMap={teamMap} />
             ))}
           </div>

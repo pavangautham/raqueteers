@@ -244,9 +244,23 @@ export default function AdminScoreInput({
    * Set 3 is only available if each team has won 1 set.
    */
   const isSetAvailable = (setIdx: number) => {
-    if (setIdx <= 1) return true;
-    const { t1, t2 } = countSetsWon(scores.slice(0, 2));
-    return t1 === 1 && t2 === 1;
+    if (setIdx === 0) return true;
+    // Super admin can access any set freely
+    if (isSuperAdmin) {
+      if (setIdx <= 1) return true;
+      const { t1, t2 } = countSetsWon(scores.slice(0, 2));
+      return t1 === 1 && t2 === 1;
+    }
+    // Scorer: each set unlocks only after the previous set is won
+    for (let i = 0; i < setIdx; i++) {
+      if (!isSetWon(scores[i])) return false;
+    }
+    // Set 3: still requires 1-1 in sets
+    if (setIdx === 2) {
+      const { t1, t2 } = countSetsWon(scores.slice(0, 2));
+      return t1 === 1 && t2 === 1;
+    }
+    return true;
   };
 
   const increment = (setIdx: number, team: "team1_score" | "team2_score") => {
@@ -409,7 +423,11 @@ export default function AdminScoreInput({
   };
 
   const courtColor =
-    match.court === "Court 2" ? "border-blue-500" : "border-green-500";
+    match.court === "Court 1"
+      ? "border-blue-500"
+      : match.court === "Court 2"
+      ? "border-green-500"
+      : "border-amber-500";
 
   const current = scores[activeSet];
 
