@@ -195,7 +195,7 @@ export default function FinalStandings({
 
   const rankIcon = (rank: number) => {
     if (rank === 1) return <Trophy className="w-4 h-4 text-amber-400" />;
-    if (rank <= 3) return <Medal className="w-4 h-4 text-gray-400" />;
+    if (rank <= 4) return <Medal className="w-4 h-4 text-gray-400" />;
     return null;
   };
 
@@ -225,7 +225,7 @@ export default function FinalStandings({
               <tr
                 key={r.team.id}
                 className={`border-b border-gray-800/30 transition-colors ${
-                  r.rank <= 3 ? "bg-amber-500/[0.03]" : ""
+                  r.rank <= 4 ? "bg-amber-500/[0.03]" : ""
                 }`}
               >
                 <td className="py-2.5 px-3">
