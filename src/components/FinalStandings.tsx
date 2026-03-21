@@ -208,16 +208,15 @@ export default function FinalStandings({
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
-            <tr className="text-gray-500 border-b border-gray-800/50">
-              <th className="text-left py-2 px-3 font-medium">#</th>
-              <th className="text-left py-2 px-2 font-medium">Team</th>
-              <th className="text-left py-2 px-2 font-medium hidden sm:table-cell">Stage</th>
-              <th className="text-center py-2 px-1 font-medium">P</th>
-              <th className="text-center py-2 px-1 font-medium">W</th>
-              <th className="text-center py-2 px-1 font-medium">L</th>
-              <th className="text-center py-2 px-1 font-medium">NS</th>
-              <th className="text-center py-2 px-1 font-medium">NP</th>
-              <th className="text-center py-2 px-2 font-medium">Pts</th>
+            <tr className="text-gray-500 border-b border-gray-800/50 text-[10px] sm:text-xs">
+              <th className="text-left py-2 px-1 sm:px-2 font-medium">#</th>
+              <th className="text-left py-2 px-1 sm:px-2 font-medium">Team</th>
+              <th className="text-center py-2 px-0.5 sm:px-1 font-medium">P</th>
+              <th className="text-center py-2 px-0.5 sm:px-1 font-medium">W</th>
+              <th className="text-center py-2 px-0.5 sm:px-1 font-medium">L</th>
+              <th className="text-center py-2 px-0.5 sm:px-1 font-medium">NS</th>
+              <th className="text-center py-2 px-0.5 sm:px-1 font-medium">NP</th>
+              <th className="text-center py-2 px-0.5 sm:px-1 font-medium">Pts</th>
             </tr>
           </thead>
           <tbody>
@@ -228,26 +227,26 @@ export default function FinalStandings({
                   r.rank <= 4 ? "bg-amber-500/[0.03]" : ""
                 }`}
               >
-                <td className="py-2.5 px-3">
-                  <div className="flex items-center gap-1.5">
+                <td className="py-2 px-1 sm:px-2">
+                  <div className="flex items-center gap-0.5 sm:gap-1">
                     <span
-                      className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold border ${rankStyle(
+                      className={`inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full text-[9px] sm:text-[10px] font-bold border ${rankStyle(
                         r.rank
                       )}`}
                     >
                       {r.rank}
                     </span>
-                    {rankIcon(r.rank)}
+                    <span className="hidden sm:inline">{rankIcon(r.rank)}</span>
                   </div>
                 </td>
-                <td className="py-2.5 px-2">
+                <td className="py-2 px-1 sm:px-2">
                   <div>
-                    <span className="text-gray-200 font-medium text-xs sm:text-sm">
+                    <span className="text-gray-200 font-medium text-[11px] sm:text-sm">
                       {r.team.player1} & {r.team.player2}
                     </span>
-                    {/* Show tag inline on mobile since Stage column is hidden */}
+                    <br className="sm:hidden" />
                     <span
-                      className={`sm:hidden ml-1.5 text-[9px] px-1.5 py-0.5 rounded-full border ${tagStyle(
+                      className={`text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded-full border ${tagStyle(
                         r.tag
                       )}`}
                     >
@@ -255,49 +254,31 @@ export default function FinalStandings({
                     </span>
                   </div>
                 </td>
-                <td className="py-2.5 px-2 hidden sm:table-cell">
-                  <span
-                    className={`text-[10px] px-2 py-0.5 rounded-full border ${tagStyle(
-                      r.tag
-                    )}`}
-                  >
-                    {r.tag}
-                  </span>
-                </td>
-                <td className="text-center py-2.5 px-1 text-gray-400">
+                <td className="text-center py-2 px-0.5 sm:px-1 text-gray-400 text-[10px] sm:text-xs">
                   {r.standing?.played ?? 0}
                 </td>
-                <td className="text-center py-2.5 px-1 text-emerald-400 font-medium">
+                <td className="text-center py-2 px-0.5 sm:px-1 text-emerald-400 font-medium text-[10px] sm:text-xs">
                   {r.standing?.won ?? 0}
                 </td>
-                <td className="text-center py-2.5 px-1 text-red-400">
+                <td className="text-center py-2 px-0.5 sm:px-1 text-red-400 text-[10px] sm:text-xs">
                   {r.standing?.lost ?? 0}
                 </td>
-                <td className="text-center py-2.5 px-1">
-                  <span className="inline-flex items-center gap-0.5">
-                    {(r.standing?.netSets ?? 0) > 0 ? (
-                      <TrendingUp className="w-3 h-3 text-emerald-400" />
-                    ) : (r.standing?.netSets ?? 0) < 0 ? (
-                      <TrendingDown className="w-3 h-3 text-red-400" />
-                    ) : (
-                      <Minus className="w-3 h-3 text-gray-600" />
-                    )}
-                    <span
-                      className={
-                        (r.standing?.netSets ?? 0) > 0
-                          ? "text-emerald-400"
-                          : (r.standing?.netSets ?? 0) < 0
-                          ? "text-red-400"
-                          : "text-gray-500"
-                      }
-                    >
-                      {(r.standing?.netSets ?? 0) > 0
-                        ? `+${r.standing?.netSets}`
-                        : r.standing?.netSets ?? 0}
-                    </span>
+                <td className="text-center py-2 px-0.5 sm:px-1 text-[10px] sm:text-xs">
+                  <span
+                    className={
+                      (r.standing?.netSets ?? 0) > 0
+                        ? "text-emerald-400"
+                        : (r.standing?.netSets ?? 0) < 0
+                        ? "text-red-400"
+                        : "text-gray-500"
+                    }
+                  >
+                    {(r.standing?.netSets ?? 0) > 0
+                      ? `+${r.standing?.netSets}`
+                      : r.standing?.netSets ?? 0}
                   </span>
                 </td>
-                <td className="text-center py-2.5 px-1">
+                <td className="text-center py-2 px-0.5 sm:px-1 text-[10px] sm:text-xs">
                   <span
                     className={
                       (r.standing?.netPoints ?? 0) > 0
@@ -312,8 +293,8 @@ export default function FinalStandings({
                       : r.standing?.netPoints ?? 0}
                   </span>
                 </td>
-                <td className="text-center py-2.5 px-2">
-                  <span className="inline-flex items-center justify-center w-7 h-6 rounded bg-white/5 text-white font-bold text-sm">
+                <td className="text-center py-2 px-0.5 sm:px-1">
+                  <span className="inline-flex items-center justify-center w-6 h-5 sm:w-7 sm:h-6 rounded bg-white/5 text-white font-bold text-[10px] sm:text-sm">
                     {r.standing?.points ?? 0}
                   </span>
                 </td>
