@@ -26,9 +26,17 @@ export default memo(function MatchCard({ match, teamMap }: MatchCardProps) {
   const isLive = match.status === "live";
   const isCompleted = match.status === "completed";
   const courtColor =
-    match.court === "Court 2" ? "border-court-2" : "border-court-3";
+    match.court === "Court 1"
+      ? "border-court-1"
+      : match.court === "Court 2"
+      ? "border-court-2"
+      : "border-court-3";
   const courtBg =
-    match.court === "Court 2" ? "bg-blue-500/10" : "bg-green-500/10";
+    match.court === "Court 1"
+      ? "bg-blue-500/10"
+      : match.court === "Court 2"
+      ? "bg-green-500/10"
+      : "bg-amber-500/10";
 
   const { setsT1, setsT2 } = useMemo(() => {
     let t1 = 0, t2 = 0;
@@ -71,14 +79,18 @@ export default memo(function MatchCard({ match, teamMap }: MatchCardProps) {
           )}
           <span
             className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${courtBg} ${
-              match.court === "Court 2" ? "text-blue-400" : "text-green-400"
+              match.court === "Court 1"
+                ? "text-blue-400"
+                : match.court === "Court 2"
+                ? "text-green-400"
+                : "text-amber-400"
             }`}
           >
             {match.court}
           </span>
           {match.round !== "league" && (
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium uppercase">
-              {match.round === "semi_final" ? "Semi Final" : "Final"}
+              {match.round === "semi_final" ? "Semi Final" : match.round === "third_place" ? "3rd Place" : "Final"}
             </span>
           )}
         </div>

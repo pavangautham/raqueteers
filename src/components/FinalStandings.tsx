@@ -74,36 +74,69 @@ export default function FinalStandings({
     }
   }
 
-  // 3rd & 4th — SF losers, ranked by league performance
-  const sfLosers: { teamId: number; standing: Standing }[] = [];
-  for (const sf of [sf1, sf2]) {
-    if (sf?.status === "completed" && sf.winner_team_id) {
-      const loserId =
-        sf.team1_id === sf.winner_team_id ? sf.team2_id : sf.team1_id;
-      if (loserId) {
-        const s = getStanding(loserId);
-        if (s) sfLosers.push({ teamId: loserId, standing: s });
+  // 3rd & 4th — from 3rd place match if played, otherwise SF losers by league stats
+  const thirdPlaceMatch = matches.find((m) => m.round === "third_place");
+
+  if (thirdPlaceMatch?.status === "completed" && thirdPlaceMatch.winner_team_id) {
+    // 3rd place match was played
+    const thirdId = thirdPlaceMatch.winner_team_id;
+    const fourthId =
+      thirdPlaceMatch.team1_id === thirdId
+        ? thirdPlaceMatch.team2_id
+        : thirdPlaceMatch.team1_id;
+
+    const thirdStanding = getStanding(thirdId);
+    if (thirdStanding) {
+      ranked.push({
+        rank: ranked.length + 1,
+        team: thirdStanding.team,
+        tag: "3rd Place",
+        standing: thirdStanding,
+      });
+    }
+
+    if (fourthId) {
+      const fourthStanding = getStanding(fourthId);
+      if (fourthStanding) {
+        ranked.push({
+          rank: ranked.length + 1,
+          team: fourthStanding.team,
+          tag: "4th Place",
+          standing: fourthStanding,
+        });
       }
     }
-  }
+  } else {
+    // No 3rd place match — rank SF losers by league performance
+    const sfLosers: { teamId: number; standing: Standing }[] = [];
+    for (const sf of [sf1, sf2]) {
+      if (sf?.status === "completed" && sf.winner_team_id) {
+        const loserId =
+          sf.team1_id === sf.winner_team_id ? sf.team2_id : sf.team1_id;
+        if (loserId) {
+          const s = getStanding(loserId);
+          if (s) sfLosers.push({ teamId: loserId, standing: s });
+        }
+      }
+    }
 
-  // Sort SF losers by league performance: points > net sets > net points
-  sfLosers.sort((a, b) => {
-    if (b.standing.points !== a.standing.points)
-      return b.standing.points - a.standing.points;
-    if (b.standing.netSets !== a.standing.netSets)
-      return b.standing.netSets - a.standing.netSets;
-    return b.standing.netPoints - a.standing.netPoints;
-  });
-
-  sfLosers.forEach((sl, i) => {
-    ranked.push({
-      rank: ranked.length + 1,
-      team: sl.standing.team,
-      tag: "Semi-finalist",
-      standing: sl.standing,
+    sfLosers.sort((a, b) => {
+      if (b.standing.points !== a.standing.points)
+        return b.standing.points - a.standing.points;
+      if (b.standing.netSets !== a.standing.netSets)
+        return b.standing.netSets - a.standing.netSets;
+      return b.standing.netPoints - a.standing.netPoints;
     });
-  });
+
+    sfLosers.forEach((sl) => {
+      ranked.push({
+        rank: ranked.length + 1,
+        team: sl.standing.team,
+        tag: "Semi-finalist",
+        standing: sl.standing,
+      });
+    });
+  }
 
   // 5th-8th — remaining teams (group 3rd & 4th), sorted by league stats
   const rankedIds = new Set(ranked.map((r) => r.team.id));
@@ -149,6 +182,10 @@ export default function FinalStandings({
         return "bg-amber-500/15 text-amber-400 border-amber-500/20";
       case "Runner-up":
         return "bg-gray-400/15 text-gray-300 border-gray-400/20";
+      case "3rd Place":
+        return "bg-orange-500/15 text-orange-400 border-orange-500/20";
+      case "4th Place":
+        return "bg-blue-500/15 text-blue-400 border-blue-500/20";
       case "Semi-finalist":
         return "bg-blue-500/15 text-blue-400 border-blue-500/20";
       default:
@@ -287,7 +324,7 @@ export default function FinalStandings({
       </div>
       <div className="px-4 py-2 border-t border-gray-800/50">
         <span className="text-[10px] text-gray-600">
-          Ranking: Final result &gt; Semi-final result &gt; League performance (Pts &gt; Net Sets &gt; Net Points)
+          Ranking: Final &gt; 3rd Place match &gt; Semi-final &gt; League performance (Pts &gt; Net Sets &gt; Net Points)
         </span>
       </div>
     </div>

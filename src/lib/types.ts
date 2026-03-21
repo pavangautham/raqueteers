@@ -9,7 +9,7 @@ export interface Team {
 export interface Match {
   id: number;
   match_number: number;
-  round: "league" | "semi_final" | "final";
+  round: "league" | "semi_final" | "third_place" | "final";
   group_name: "A" | "B" | null;
   team1_id: number | null;
   team2_id: number | null;

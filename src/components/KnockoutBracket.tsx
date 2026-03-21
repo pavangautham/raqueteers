@@ -12,6 +12,7 @@ interface KnockoutBracketProps {
 export default function KnockoutBracket({ matches, teamMap }: KnockoutBracketProps) {
   const sf1 = matches.find((m) => m.match_number === 13);
   const sf2 = matches.find((m) => m.match_number === 14);
+  const thirdPlace = matches.find((m) => m.round === "third_place");
   const final = matches.find((m) => m.match_number === 15);
 
   const getTeamLabel = (teamId: number | null | undefined) => {
@@ -31,6 +32,8 @@ export default function KnockoutBracket({ matches, teamMap }: KnockoutBracketPro
         <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
           {label === "Final" ? (
             <Trophy className="w-3.5 h-3.5 text-amber-400" />
+          ) : label.includes("3rd") ? (
+            <Trophy className="w-3.5 h-3.5 text-orange-400" />
           ) : (
             <Swords className="w-3.5 h-3.5 text-purple-400" />
           )}
@@ -109,6 +112,11 @@ export default function KnockoutBracket({ matches, teamMap }: KnockoutBracketPro
         {renderKnockoutMatch(sf1, "Semi Final 1 — A1 vs B2")}
         {renderKnockoutMatch(sf2, "Semi Final 2 — B1 vs A2")}
       </div>
+      {thirdPlace && (
+        <div className="max-w-lg mx-auto">
+          {renderKnockoutMatch(thirdPlace, "3rd Place Match")}
+        </div>
+      )}
       <div className="max-w-lg mx-auto">
         {renderKnockoutMatch(final, "Final")}
       </div>
